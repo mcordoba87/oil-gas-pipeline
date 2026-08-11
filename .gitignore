@@ -1,0 +1,20 @@
+# Env local - NO subir
+.env
+
+# Volúmenes de datos locales (nunca contenedores)
+minio_data/
+tsdb_data/
+oltp_data/
+grafana_data/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# IDE / SO
+.idea/
+.vscode/
+.DS_Store

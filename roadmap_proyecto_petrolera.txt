@@ -7,7 +7,7 @@ Stack: Docker Compose, Eclipse Mosquitto (MQTT), TimescaleDB/QuestDB, MinIO,
 
 FASE 0: SETUP DEL ENTORNO
 -------------------------------------------------------------------------------
-[ ] 0.1. Estructura de carpetas
+[x] 0.1. Estructura de carpetas
     ├── docker-compose.yml
     ├── .env.example
     ├── mqtt/               # Configuración de Mosquitto (ACLs, TLS)
@@ -17,13 +17,13 @@ FASE 0: SETUP DEL ENTORNO
     ├── grafana/             # Dashboards y provisioning
     └── api/                 # Backend FastAPI
 
-[ ] 0.2. Docker Compose base
+[x] 0.2. Docker Compose base
     - Definir servicio mosquitto (broker MQTT).
     - Definir servicio timescaledb (o questdb) como Time-Series DB.
     - Definir servicio minio (S3 local) y crear bucket inicial oil-lakehouse.
     - Definir servicio grafana (dashboards de series temporales).
 
-[ ] 0.3. Testear conectividad
+[x] 0.3. Testear conectividad
     - Levantar contenedores (`docker compose up -d`) y verificar healthchecks.
     - Validar que todos los servicios están en la misma red Docker.
 
