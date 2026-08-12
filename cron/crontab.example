@@ -1,0 +1,20 @@
+# ===============================================================================
+# Crontab del host para jobs batch de la Fase 1
+# Instalar con: bash cron/setup_cron.sh  (o copiar manualmente a crontab -e)
+# IMPORTANTE: ajustar la ruta del proyecto en setup_cron.sh
+# ===============================================================================
+
+# Reporte diario de producción -> landing/produccion_diaria/
+0 3 * * * cd /ruta/proyecto && /usr/bin/python3 generators/daily_production_csv.py >> /ruta/proyecto/logs/batch.log 2>&1
+
+# Análisis de laboratorio diario -> landing/laboratorio/
+15 3 * * * cd /ruta/proyecto && /usr/bin/python3 generators/daily_lab_csv.py >> /ruta/proyecto/logs/batch.log 2>&1
+
+# Extracción OLTP -> raw/oltp/
+30 3 * * * cd /ruta/proyecto && /usr/bin/python3 ingestion/extract_oltp.py >> /ruta/proyecto/logs/batch.log 2>&1
+
+# Precios WTI/Brent -> raw/precios/
+0 6 * * * cd /ruta/proyecto && /usr/bin/python3 generators/fetch_prices.py >> /ruta/proyecto/logs/batch.log 2>&1
+
+# Logs SCADA -> raw/logs_scada/ (cada hora, más frecuencia de eventos)
+0 * * * * cd /ruta/proyecto && /usr/bin/python3 generators/scada_logs.py >> /ruta/proyecto/logs/batch.log 2>&1

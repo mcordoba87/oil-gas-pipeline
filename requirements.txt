@@ -1,0 +1,8 @@
+paho-mqtt>=1.6
+psycopg2-binary>=2.9
+faker>=18.0
+boto3>=1.28
+requests>=2.31
+fastapi>=0.104
+uvicorn>=0.24
+python-dotenv>=1.0

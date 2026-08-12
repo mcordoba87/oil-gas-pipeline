@@ -40,6 +40,7 @@ services:
     ports:
       - "${TSDB_PORT:-5432}:5432"
     volumes:
+      - ./timescaledb/init:/docker-entrypoint-initdb.d:ro
       - tsdb_data:/var/lib/postgresql/data
     networks:
       - oil_net
@@ -116,6 +117,25 @@ services:
       "
     networks:
       - oil_net
+
+  # --------------------------------- Mock de API de precios WTI/Brent (Fase 1)
+  mock_prices:
+    build:
+      context: .
+      dockerfile: api/mock_prices.Dockerfile
+    image: oilgas-mock-prices:latest
+    container_name: oilgas-mock_prices
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    networks:
+      - oil_net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=2)\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ------------------------------------------------------------------- Grafana
   grafana:
