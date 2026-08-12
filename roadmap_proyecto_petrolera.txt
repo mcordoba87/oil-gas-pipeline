@@ -47,7 +47,7 @@ Decisiones a definir:
 INGRESO A - SENSORES IOT (Streaming) -> MQTT
 ===============================================================================
 
-[ ] 1. Simulador de sensores (generators/sensor_simulator.py)
+[x] 1. Simulador de sensores (generators/sensor_simulator.py)
     - Script Python (paho-mqtt) que publica cada X segundos:
         presión, temperatura, caudal (BPD) por pozo.
     - Topics MQTT: pozos/{pozo_id}/presion, pozos/{pozo_id}/temperatura,
@@ -56,7 +56,7 @@ INGRESO A - SENSORES IOT (Streaming) -> MQTT
     - Simular problemas de red: paquetes fuera de orden, delays, pérdida de
       mensajes.
 
-[ ] 2. Worker de Ingestión (ingestion/mqtt_worker.py)
+[x] 2. Worker de Ingestión (ingestion/mqtt_worker.py)
     - Suscripción a topics MQTT.
     - Parseo y validación de payload (JSON schema).
     - Manejo de datos OUT-OF-ORDER (buffer/watermarking, tolerancia ~5 min).
@@ -70,13 +70,13 @@ INGRESO A - SENSORES IOT (Streaming) -> MQTT
 INGRESO B - CSV DIARIO (Batch) -> LANDING EN MINIO
 ===============================================================================
 
-[ ] 3. Script daily_production_csv.py
+[x] 3. Script daily_production_csv.py
     - Genera un CSV diario simulando reportes manuales de producción por pozo:
         pozo_id, fecha, bpd_producido, horas_operativas, observaciones
     - Lo sube a:
         s3://oil-lakehouse/landing/produccion_diaria/YYYY-MM-DD/reporte.csv
 
-[ ] 4. Script daily_lab_csv.py
+[x] 4. Script daily_lab_csv.py
     - Genera un CSV diario simulando análisis de laboratorio (calidad de crudo):
         pozo_id, fecha, grados_api, pct_agua, pct_sedimentos
     - Lo sube a:
@@ -89,20 +89,20 @@ INGRESO B - CSV DIARIO (Batch) -> LANDING EN MINIO
 INGRESO C - BASE TRANSACCIONAL (OLTP) -> ERP / CMMS
 ===============================================================================
 
-[ ] 5. Postgres OLTP separado (docker-compose: postgres_oltp)
+[x] 5. Postgres OLTP separado (docker-compose: postgres_oltp)
     - Simula el ERP/CMMS (sistema de mantenimiento) de la empresa.
     - Tablas maestras y transaccionales:
         * pozos (id, nombre, cuenca, fecha_perforacion, estado)
         * mantenimientos (id, pozo_id, fecha, tipo, costo, tecnico)
         * paradas_programadas (id, pozo_id, fecha_inicio, fecha_fin, motivo)
 
-[ ] 6. Poblador de datos (generators/seed_oltp.py)
+[x] 6. Poblador de datos (generators/seed_oltp.py)
     - Usa Faker (Python) para generar metadata realista de pozos y
       mantenimientos.
     - Actualiza periódicamente estado/mantenimientos para simular operación
       real (útil luego para SCD Type 2 en dbt).
 
-[ ] 7. Extractor OLTP -> Lakehouse (ingestion/extract_oltp.py)
+[x] 7. Extractor OLTP -> Lakehouse (ingestion/extract_oltp.py)
     - Job programado (cron) que extrae diariamente pozos/mantenimientos desde
       Postgres OLTP y los deja en s3://oil-lakehouse/raw/oltp/ o los carga
       directo a un esquema raw en TimescaleDB/Postgres analítico.
@@ -111,12 +111,12 @@ INGRESO C - BASE TRANSACCIONAL (OLTP) -> ERP / CMMS
 INGRESO D - API EXTERNA Y LOGS (Opcional, recomendado)
 ===============================================================================
 
-[ ] 8. Cliente de API externa (generators/fetch_prices.py)
+[x] 8. Cliente de API externa (generators/fetch_prices.py)
     - Consulta diaria de precios WTI/Brent (API real gratuita o mock FastAPI
       propio en puerto 8001).
     - Guarda el resultado en s3://oil-lakehouse/raw/precios/YYYY-MM-DD.json
 
-[ ] 9. Generador de logs SCADA (generators/scada_logs.py)
+[x] 9. Generador de logs SCADA (generators/scada_logs.py)
     - Simula logs de eventos del sistema SCADA (JSON lines): reinicios de
       sensores, errores de conexión, caídas de comunicación.
     - Los deja en s3://oil-lakehouse/raw/logs_scada/ particionado por fecha.
@@ -126,7 +126,7 @@ INGRESO D - API EXTERNA Y LOGS (Opcional, recomendado)
 EJECUCIÓN (cron / programado)
 ===============================================================================
 
-[ ] 10. Agregar en crontab del host:
+[x] 10. Agregar en crontab del host:
     - daily_production_csv.py  -> 1 vez/día (ej. 03:00)
     - daily_lab_csv.py         -> 1 vez/día (ej. 03:15)
     - extract_oltp.py          -> 1 vez/día (ej. 03:30)
@@ -138,9 +138,9 @@ EJECUCIÓN (cron / programado)
 AJUSTES DE SOPORTE
 ===============================================================================
 
-[ ] 11. requirements.txt: agregar paho-mqtt, faker, boto3, requests, fastapi,
+[x] 11. requirements.txt: agregar paho-mqtt, faker, boto3, requests, fastapi,
         uvicorn (si se usa mock API de precios)
-[ ] 12. .env.example: documentar nuevas variables
+[x] 12. .env.example: documentar nuevas variables
         MQTT_BROKER_URL=mosquitto://localhost:1883
         MINIO_BUCKET=oil-lakehouse
         OLTP_DB_URL=postgresql://user:pass@postgres_oltp:5432/cmms
@@ -151,15 +151,15 @@ AJUSTES DE SOPORTE
 VERIFICACIÓN
 ===============================================================================
 
-[ ] 14. Correr sensor_simulator.py -> verificar mensajes llegando por MQTT
+[x] 14. Correr sensor_simulator.py -> verificar mensajes llegando por MQTT
         (ej. con `mosquitto_sub`).
-[ ] 15. Correr mqtt_worker.py -> verificar filas nuevas en hypertable
+[x] 15. Correr mqtt_worker.py -> verificar filas nuevas en hypertable
         lecturas_sensores.
-[ ] 16. Correr daily_production_csv.py y daily_lab_csv.py -> verificar
+[x] 16. Correr daily_production_csv.py y daily_lab_csv.py -> verificar
         archivos en landing/ dentro de MinIO.
-[ ] 17. Correr seed_oltp.py -> verificar datos en Postgres OLTP (pozos,
+[x] 17. Correr seed_oltp.py -> verificar datos en Postgres OLTP (pozos,
         mantenimientos).
-[ ] 18. Correr extract_oltp.py -> verificar datos replicados al lakehouse.
+[x] 18. Correr extract_oltp.py -> verificar datos replicados al lakehouse.
 [ ] 19. Verificar crontab -l con todos los jobs programados.
 
 ===============================================================================

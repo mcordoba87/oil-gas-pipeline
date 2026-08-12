@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LecturaSensor",
+  "type": "object",
+  "required": ["pozo_id", "ts_pub", "seq", "valor"],
+  "properties": {
+    "pozo_id": { "type": "string", "minLength": 1 },
+    "ts_pub": { "type": "string", "format": "date-time" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "valor": { "type": "number" }
+  }
+}
