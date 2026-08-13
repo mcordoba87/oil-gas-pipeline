@@ -13,6 +13,9 @@
 # Extracción OLTP -> raw/oltp/
 30 3 * * * cd /ruta/proyecto && /usr/bin/python3 ingestion/extract_oltp.py >> /ruta/proyecto/logs/batch.log 2>&1
 
+# Sincronizar cuencas/pozos OLTP -> TimescaleDB (maestros de trabajo, Fase 2)
+45 3 * * * cd /ruta/proyecto && /usr/bin/python3 generators/seed_tsdb.py >> /ruta/proyecto/logs/batch.log 2>&1
+
 # Precios WTI/Brent -> raw/precios/
 0 6 * * * cd /ruta/proyecto && /usr/bin/python3 generators/fetch_prices.py >> /ruta/proyecto/logs/batch.log 2>&1
 

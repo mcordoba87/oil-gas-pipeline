@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ===============================================================================
-# Instala el crontab de jobs batch de la Fase 1
+# Instala el crontab de jobs batch de la Fase 1 y 2
 # Uso: bash cron/setup_cron.sh
 # ===============================================================================
 set -euo pipefail
