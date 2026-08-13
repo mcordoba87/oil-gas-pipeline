@@ -189,17 +189,33 @@ MODIFICADOS:
 
 FASE 2: MODELADO DE BASE DE DATOS TIME-SERIES (DATA ENGINEERING FOCUS)
 -------------------------------------------------------------------------------
-[ ] 2.1. Diseño de esquema
+[x] 2.1. Diseño de esquema
     - Tablas: pozos, lecturas_sensores, cuencas, alertas.
+    - Ver timescaledb/init/02_cuencas_alertas.sql (cuencas + pozos enriquecido
+      + hypertable alertas). pozos/cuencas se sincronizan desde OLTP con
+      generators/seed_tsdb.py.
 
-[ ] 2.2. Hypertables en TimescaleDB
+[x] 2.2. Hypertables en TimescaleDB
     - Crear hypertable particionada por tiempo (y por pozo_id).
-    - Configurar políticas de retención (ej. datos crudos a 90 días).
-    - Configurar compresión automática de chunks antiguos.
+        * lecturas_sensores: particionada por tiempo (chunks 1 día) +
+          índice por pozo_id (decisión: sin hash partitioning, ver nota abajo).
+        * alertas: hypertable con retención 1 año y compresión 30 días.
+    - Configurar políticas de retención (ej. datos crudos a 90 días). [hecho]
+    - Configurar compresión automática de chunks antiguos. [hecho]
 
-[ ] 2.3. Continuous Aggregates
+[x] 2.3. Continuous Aggregates
     - Vistas materializadas automáticas para promedios por hora/día.
-    - Definir índices para queries por pozo + rango temporal.
+        * lecturas_hora, lecturas_dia (por pozo) y lecturas_hora_cuenca
+          (por cuenca). Real-time (materialized_only=false).
+        * Políticas de refresh automáticas en timescaledb/init/03_continuous_aggregates.sql.
+    - Definir índices para queries por pozo + rango temporal. [hecho]
+
+    NOTA 2.2: con ~25 pozos el hash partitioning por pozo_id no aporta; se
+    mantiene partición por tiempo + índices (pozo_id, time DESC).
+    NOTA FASE 2: para aplicar el esquema a una BD ya inicializada correr:
+        bash scripts/apply_tsdb_migrations.sh   # aplica timescaledb/init/*.sql
+        bash scripts/verify_tsdb.sh             # smoke test (esquema, agregados, políticas)
+        python generators/seed_tsdb.py          # sincroniza cuencas/pozos OLTP -> TSDB
 
 
 FASE 3: DATA WAREHOUSE Y TRANSFORMACIONES DBT (ANALYTICS ENGINEERING FOCUS)
