@@ -1,0 +1,222 @@
+# ===============================================================================
+# Tests de calidad de datos (Fase 3.5)
+# Tests primarios (unique, not_null, accepted_values, relationships) + tests
+# avanzados de dbt_expectations (rangos físicos y de negocio).
+# ===============================================================================
+version: 2
+
+models:
+  # ------------------------------------------------------- Staging (Bronze)
+  - name: stg_lecturas_sensores
+    description: "Lecturas de sensores normalizadas (dedup por time+pozo_id)."
+    columns:
+      - name: time
+        tests: [not_null]
+      - name: pozo_id
+        tests: [not_null]
+      - name: presion_psi
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000
+      - name: temperatura_c
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -20
+              max_value: 200
+      - name: caudal_bpd
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+      - name: gas_mcfd
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  - name: stg_produccion_diaria
+    description: "Reporte de producción diaria limpio."
+    columns:
+      - name: pozo_id
+        tests: [not_null]
+      - name: fecha
+        tests: [not_null]
+      - name: bpd_producido
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: gas_mcfd
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: horas_operativas
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 24
+
+  - name: stg_laboratorio
+    description: "Análisis de laboratorio normalizado."
+    columns:
+      - name: pozo_id
+        tests: [not_null]
+      - name: fecha
+        tests: [not_null]
+      - name: grados_api
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 10
+              max_value: 60
+      - name: pct_agua
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+      - name: pct_sedimentos
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+
+  - name: stg_pozos
+    description: "Snapshot de pozos OLTP normalizado."
+    columns:
+      - name: pozo_id
+        tests:
+          - unique
+          - not_null
+      - name: estado
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["activo", "inactivo", "mantenimiento", "abandonado"]
+
+  - name: stg_mantenimientos
+    description: "Mantenimientos OLTP normalizados."
+    columns:
+      - name: mantenimiento_id
+        tests: [unique, not_null]
+      - name: pozo_id
+        tests: [not_null]
+      - name: fecha
+        tests: [not_null]
+
+  - name: stg_paradas
+    description: "Paradas programadas OLTP normalizadas."
+    columns:
+      - name: parada_id
+        tests: [unique, not_null]
+      - name: pozo_id
+        tests: [not_null]
+
+  - name: stg_precios
+    description: "Precios WTI/Brent normalizados."
+    columns:
+      - name: wti_usd_bbl
+        tests: [not_null]
+      - name: brent_usd_bbl
+        tests: [not_null]
+
+  - name: stg_scada_logs
+    description: "Logs SCADA semi-estructurados normalizados."
+    columns:
+      - name: timestamp
+        tests: [not_null]
+      - name: evento
+        tests: [not_null]
+      - name: nivel
+        tests:
+          - accepted_values:
+              values: ["INFO", "WARN", "ERROR"]
+
+  # ---------------------------------------------------- Intermediate (Silver)
+  - name: int_lecturas_interpoladas
+    description: "Grilla horaria por pozo con huecos interpolados."
+    columns:
+      - name: pozo_id
+        tests: [not_null]
+      - name: hora
+        tests: [not_null]
+
+  - name: int_deteccion_outliers
+    description: "Flagging de outliers por z-score en ventana móvil."
+    columns:
+      - name: pozo_id
+        tests: [not_null]
+      - name: es_outlier
+        tests: [not_null]
+
+  # ------------------------------------------------------------- Marts (Gold)
+  - name: dim_pozos
+    description: "Dimensión de pozos con estado actual e historial."
+    columns:
+      - name: pozo_id
+        tests: [unique, not_null]
+      - name: cuenca
+        tests: [not_null]
+      - name: estado_actual
+        tests: [not_null]
+
+  - name: fct_lecturas
+    description: "Hechos de series temporales unificadas por pozo."
+    columns:
+      - name: time
+        tests: [not_null]
+      - name: pozo_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_pozos')
+              field: pozo_id
+
+  - name: fct_produccion_diaria
+    description: "Producción acumulada por pozo/día."
+    columns:
+      - name: fecha
+        tests: [not_null]
+      - name: pozo_id
+        tests: [not_null]
+      - name: bpd_producido
+        tests: [not_null]
+
+  - name: fct_boe
+    description: "Barriles equivalentes de petróleo por pozo/día."
+    columns:
+      - name: boe_bbl
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  - name: fct_curvas_declinacion
+    description: "Ajuste exponencial de Arps por pozo."
+    columns:
+      - name: pozo_id
+        tests: [unique, not_null]
+      - name: tipo
+        tests: [not_null]
+
+  - name: fct_alertas_anomalias
+    description: "Alertas de anomalías persistidas en la hypertable alertas."
+    columns:
+      - name: pozo_id
+        tests: [not_null]
+      - name: tipo
+        tests: [not_null]
+      - name: estado
+        tests:
+          - accepted_values:
+              values: ["abierta", "resuelta"]
+      - name: severidad
+        tests:
+          - accepted_values:
+              values: ["info", "warning", "critical"]

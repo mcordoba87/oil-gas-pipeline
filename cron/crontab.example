@@ -16,8 +16,14 @@
 # Sincronizar cuencas/pozos OLTP -> TimescaleDB (maestros de trabajo, Fase 2)
 45 3 * * * cd /ruta/proyecto && /usr/bin/python3 generators/seed_tsdb.py >> /ruta/proyecto/logs/batch.log 2>&1
 
+# Cargar landing/raw de MinIO -> esquema raw en TimescaleDB (Fase 3, insumo de dbt)
+55 3 * * * cd /ruta/proyecto && /usr/bin/python3 ingestion/load_landing_to_raw.py >> /ruta/proyecto/logs/batch.log 2>&1
+
 # Precios WTI/Brent -> raw/precios/
 0 6 * * * cd /ruta/proyecto && /usr/bin/python3 generators/fetch_prices.py >> /ruta/proyecto/logs/batch.log 2>&1
+
+# Cargar precios de MinIO -> raw.precios (Fase 3)
+5 6 * * * cd /ruta/proyecto && /usr/bin/python3 ingestion/load_landing_to_raw.py --tables precios >> /ruta/proyecto/logs/batch.log 2>&1
 
 # Logs SCADA -> raw/logs_scada/ (cada hora, más frecuencia de eventos)
 0 * * * * cd /ruta/proyecto && /usr/bin/python3 generators/scada_logs.py >> /ruta/proyecto/logs/batch.log 2>&1

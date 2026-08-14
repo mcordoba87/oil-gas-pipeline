@@ -1,0 +1,24 @@
+# ===============================================================================
+# Perfil de dbt - TimescaleDB vía adapter postgres (dbt-core 1.9.x)
+# Las credenciales se resuelven desde variables de entorno (nunca commitar).
+# TIMESDB_DB_URL: postgresql://user:pass@host:port/db  (ya usada por el resto
+# del proyecto; también puede usarse TSDB_POSTGRES_* individualmente).
+# Uso:
+#   cd dbt_petrolera && dbt --profiles-dir . <comando>
+# ===============================================================================
+dbt_petrolera:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('TSDB_HOST', 'localhost') }}"
+      port: "{{ env_var('TSDB_PORT', '5432') | int }}"
+      user: "{{ env_var('TSDB_POSTGRES_USER') }}"
+      password: "{{ env_var('TSDB_POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('TSDB_POSTGRES_DB') }}"
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      retries: 1
+      sslmode: prefer

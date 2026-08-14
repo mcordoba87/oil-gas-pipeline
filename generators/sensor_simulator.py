@@ -46,6 +46,7 @@ class WellStatus:
         self.presion = random.uniform(800, 2000)      # psi
         self.temperatura = random.uniform(30, 90)     # °C
         self.caudal = random.uniform(50, 800)         # BPD
+        self.gas = random.uniform(200, 4000)          # mcf/d
         self.seq = random.randint(0, 10000)
 
 
@@ -107,6 +108,7 @@ def main():
                 st.presion = _random_walk(st.presion, 500, 3000, 25)
                 st.temperatura = _random_walk(st.temperatura, 15, 120, 0.8)
                 st.caudal = _random_walk(st.caudal, 0, 1200, 40)
+                st.gas = _random_walk(st.gas, 50, 6000, 250)
                 ts = datetime.now(timezone.utc).isoformat()
 
                 # Delays: algunos mensajes salen con timestamps del pasado cercano
@@ -116,7 +118,7 @@ def main():
 
                 payload = {"pozo_id": st.well_id, "ts_pub": ts, "seq": st.seq, "valor": None}
 
-                for metric, value in (("presion", st.presion), ("temperatura", st.temperatura), ("caudal", st.caudal)):
+                for metric, value in (("presion", st.presion), ("temperatura", st.temperatura), ("caudal", st.caudal), ("gas", st.gas)):
                     if random.random() < loss_prob:
                         continue  # pérdida de mensaje simulada
                     p = dict(payload)

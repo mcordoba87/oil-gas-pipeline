@@ -1,0 +1,62 @@
+# ===============================================================================
+# dbt Core - Monitoreo IoT de pozos y mantenimiento predictivo (Fase 3)
+# Adapter: postgres (TimescaleDB es compatible con Postgres).
+# Esquemas por capa: staging (bronze), intermediate (silver), marts (gold).
+# ===============================================================================
+name: dbt_petrolera
+version: "1.0.0"
+config-version: 2
+
+profile: dbt_petrolera
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+macro-paths: ["macros"]
+docs-paths: ["models"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  # Umbrales de calidad y reglas de negocio (Fase 3)
+  alert_zscore_umbral: 3            # regla 1: z-score de presión
+  alert_caudal_drop_factor: 0.5     # regla 2: caída a < 50% del promedio 24h
+  alert_caudal_ventana_horas: 24    # regla 2: ventana previa
+  alert_rango_presion: [0, 10000]   # regla 4: psi
+  alert_rango_temp: [-20, 200]      # regla 4: °C
+  # regla 3: días máx sin mantenimiento por tipo (CMMS)
+  mantenimiento_dias_por_tipo:
+    preventivo: 120
+    correctivo: 90
+    bombeo_ES: 180
+    estimulacion: 365
+  boe_factor_gas: 6                 # mcf -> bbl equivalentes (BOE)
+  declinacion_ventana_dias: 90      # ventana de regresión para curvas de declinación
+
+models:
+  dbt_petrolera:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: view
+      +schema: marts
+      fct_produccion_diaria:
+        +materialized: table
+      fct_curvas_declinacion:
+        +materialized: table
+      fct_alertas_anomalias:
+        +materialized: incremental
+        +schema: public            # escribe en la hypertable `alertas`
+        +on_schema_change: append_new_columns
+
+snapshots:
+  dbt_petrolera:
+    +schema: snapshots

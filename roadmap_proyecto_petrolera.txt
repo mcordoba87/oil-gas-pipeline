@@ -162,11 +162,13 @@ VERIFICACIÓN
 [x] 18. Correr extract_oltp.py -> verificar datos replicados al lakehouse.
 [ ] 19. Verificar crontab -l con todos los jobs programados.
 
-===============================================================================
+=====================================================================
 FUERA DE ALCANCE (para más adelante)
-===============================================================================
-    - dbt NO participa aún en esto (consumirá landing/, raw/oltp/ y raw/precios/
-      en Fase 3).
+=====================================================================
+    - dbt consume landing/, raw/oltp/ y raw/precios en Fase 3 a través del
+      loader ingestion/load_landing_to_raw.py (dbt no lee MinIO directo).
+    - Interpolación lineal (int_lecturas_interpoladas) y declinación
+      hiperbólica quedan como mejoras futuras.
 
 ===============================================================================
 ARCHIVOS
@@ -180,10 +182,27 @@ NUEVOS:
     generators/scada_logs.py
     ingestion/mqtt_worker.py
     ingestion/extract_oltp.py
+NUEVOS FASE 3:
+    timescaledb/init/04_gas_y_raw.sql        # columna gas + esquema raw + carga_registros
+    ingestion/load_landing_to_raw.py         # loader MinIO -> TSDB (COPY)
+    scripts/verify_dbt.sh                    # smoke test de la Fase 3
+    dbt_petrolera/dbt_project.yml, profiles.yml, packages.yml
+    dbt_petrolera/macros/generate_schema_name.sql
+    dbt_petrolera/models/sources.yml, schema.yml
+    dbt_petrolera/models/staging/*.sql       # 8 modelos
+    dbt_petrolera/models/intermediate/*.sql  # 3 modelos
+    dbt_petrolera/models/marts/*.sql         # 6 modelos
+    dbt_petrolera/snapshots/snap_pozos_estado.sql  # SCD Type 2
 MODIFICADOS:
     docker-compose.yml
-    requirements.txt
+    requirements.txt          # + dbt-postgres
     .env.example
+    timescaledb/init/01_lecturas_sensores.sql   # + gas_mcfd
+    generators/sensor_simulator.py              # métrica gas
+    generators/daily_production_csv.py          # columna gas_mcfd
+    ingestion/mqtt_worker.py                    # reensambla 4 métricas
+    cron/crontab.example                        # jobs del loader
+    .gitignore                                  # target/logs/packages dbt
 ===============================================================================
 
 
@@ -219,44 +238,62 @@ FASE 2: MODELADO DE BASE DE DATOS TIME-SERIES (DATA ENGINEERING FOCUS)
 
 
 FASE 3: DATA WAREHOUSE Y TRANSFORMACIONES DBT (ANALYTICS ENGINEERING FOCUS)
--------------------------------------------------------------------------------
-[ ] 3.1. Inicialización de dbt
-    - dbt-timescale contra TimescaleDB en dbt_petrolera/.
-    - profiles.yml y dbt_project.yml configurados.
-    - Definir sources: mqtt/timescale (lecturas), landing CSV (producción,
-      laboratorio), raw OLTP (pozos, mantenimientos), raw precios/logs.
+------------------------------------------------------------------------------ [x]
+[x] 3.1. Inicialización de dbt
+    - dbt Core (adapter postgres) contra TimescaleDB en dbt_petrolera/. NOTA:
+      dbt-timescaledb requiere Python >=3.11; con Python 3.10 se usa el adapter
+      dbt-postgres 1.9 (TimescaleDB es compatible con Postgres).
+    - profiles.yml (dbt_petrolera/profiles.yml, credenciales por env vars) y
+      dbt_project.yml configurados. Esquemas por capa: staging/intermediate/marts
+      (macro generate_schema_name para nombres limpios).
+    - Sources definidos: timescale (lecturas, agregados, pozos, cuencas, alertas)
+      y raw (tablas cargadas desde MinIO por ingestion/load_landing_to_raw.py:
+      producción, laboratorio, OLTP, precios, logs SCADA).
+    - dbt-expectations + dbt_utils como paquetes (dbt deps).
 
-[ ] 3.2. Capa Staging (Bronze)
-    - stg_lecturas_sensores.sql: tipado, normalización de unidades (psi,
-      °F/°C, BPD), dedup por timestamp+pozo.
-    - stg_produccion_diaria.sql: limpieza del CSV de producción.
+[x] 3.2. Capa Staging (Bronze)
+    - stg_lecturas_sensores.sql: tipado, dedup por (time, pozo_id), unidades.
+    - stg_produccion_diaria.sql: limpieza del CSV de producción (+ gas_mcfd).
     - stg_laboratorio.sql: limpieza del CSV de análisis de laboratorio.
-    - stg_pozos.sql / stg_mantenimientos.sql: normalización desde OLTP.
+    - stg_pozos.sql / stg_mantenimientos.sql / stg_paradas.sql: normalización
+      desde OLTP (mapeo id interno -> pozo_id de negocio).
     - stg_precios.sql: normalización de precios WTI/Brent.
+    - stg_scada_logs.sql: normalización de logs semi-estructurados (bonus).
 
-[ ] 3.3. Capa Intermediate (Silver)
-    - int_lecturas_interpoladas.sql: interpolación de lecturas perdidas
-      (forward-fill / interpolación lineal).
-    - int_deteccion_outliers.sql: flagging de outliers en presión/caudal.
+[x] 3.3. Capa Intermediate (Silver)
+    - int_lecturas_interpoladas.sql: forward-fill de lecturas perdidas (Postgres
+      no soporta IGNORE NULLS; interpolación lineal queda como mejora futura).
+    - int_deteccion_outliers.sql: z-score de presión/caudal en ventana móvil 7d.
     - dbt snapshot (snap_pozos_estado): SCD Type 2 sobre estado del pozo.
 
-[ ] 3.4. Capa Marts (Gold) - Modelado Dimensional
-    - dim_pozos.sql: dimensión de pozos con estado actual e historial.
-    - fct_lecturas.sql: hechos de series temporales unificadas.
-    - fct_produccion_diaria.sql: producción acumulada por pozo/cuenca.
-    - fct_boe.sql: cálculo de Barriles Equivalentes de Petróleo (BOE),
-      conversión gas/petróleo a unidad común.
-    - fct_curvas_declinacion.sql: ajuste de curvas de declinación (Arps:
-      exponencial/hiperbólica) por pozo y cuenca.
-    - fct_alertas_anomalias.sql: alertas por reglas:
-        1) desviación estándar de presión > umbral (z-score > 3)
-        2) caída abrupta de caudal en ventana móvil
-        3) mantenimiento vencido según CMMS
-        4) lectura fuera de rango físico esperado
+[x] 3.4. Capa Marts (Gold) - Modelado Dimensional
+    - dim_pozos.sql: dimensión de pozos con estado actual e historial + lab.
+    - fct_lecturas.sql: hechos de series temporales unificadas (+ cuenca).
+    - fct_produccion_diaria.sql: producción acumulada por pozo/cuenca (tabla).
+    - fct_boe.sql: BOE = bpd + gas_mcfd/6 (se agregó gas al stack).
+    - fct_curvas_declinacion.sql: ajuste exponencial de Arps por pozo vía
+      regresión lineal (regr_slope/intercept/r2). Hiperbólica = mejora futura.
+    - fct_alertas_anomalias.sql: modelo incremental (alias='alertas') sobre la
+      hypertable alertas. Reglas: 1) z-score presión > 3, 2) caída abrupta de
+      caudal en ventana 24h, 3) mantenimiento vencido según CMMS por tipo,
+      4) lectura fuera de rango físico. Incluye pre-hook de resolución
+      (estado abierta -> resuelta cuando la condición desaparece).
 
-[ ] 3.5. Testing y Calidad de Datos
-    - Tests primarios en schema.yml (unique, not_null).
-    - dbt_expectations: rangos válidos de presión, temperatura, BOE >= 0.
+[x] 3.5. Testing y Calidad de Datos
+    - Tests primarios en models/schema.yml (unique, not_null, accepted_values,
+      relationships): 64 tests en total, todos PASAN.
+    - dbt_expectations: rangos válidos de presión, temperatura, caudal, gas, BOE.
+
+NOTA SOPORTE FASE 3:
+    - dbt NO puede leer de MinIO: se creó ingestion/load_landing_to_raw.py que
+      descarga landing/ y raw/ y los carga con COPY al esquema raw de TSDB
+      (reemplazo para dumps completos OLTP; append acumulativo para fechas
+      únicas). Tabla raw.carga_registros evita duplicados.
+    - Se agregó gas_mcfd a lecturas_sensores, simulador (topic pozos/{p}/gas),
+      worker (4 métricas) y al CSV de producción (timescaledb/init/04_gas_y_raw.sql).
+    - Cron: load_landing_to_raw.py 03:55 (producción/lab/OLTP) y 06:05 (precios).
+    - Verificación: bash scripts/verify_dbt.sh (esquema raw, dbt run/test/snapshot,
+      conteos y muestras de marts).
 
 
 FASE 4: VISUALIZACIÓN, API & SERVIDO DE DATOS
