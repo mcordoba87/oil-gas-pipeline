@@ -2,6 +2,7 @@
 
 Genera un CSV simulando el reporte manual de producción y lo sube a:
     s3://oil-lakehouse/landing/produccion_diaria/YYYY-MM-DD/reporte.csv
+Incluye producción de petróleo (bpd) y gas (mcfd) para el cálculo de BOE en Fase 3.
 
 Uso:
     python generators/daily_production_csv.py [--fecha YYYY-MM-DD]
@@ -23,6 +24,7 @@ def build_rows(fecha):
     rows = []
     for pozo_id in active_wells():
         bpd = round(random.uniform(50, 900), 1)
+        gas_mcfd = round(random.uniform(200, 4000), 1)
         horas = random.choice([16, 18, 20, 22, 24])
         obs = random.choice(["", "", "Mantenimiento preventivo", "Corte por parada", "Baja por gas lift"])
         rows.append({
@@ -31,6 +33,7 @@ def build_rows(fecha):
             "bpd_producido": bpd,
             "horas_operativas": horas,
             "observaciones": obs,
+            "gas_mcfd": gas_mcfd,
         })
     return rows
 
@@ -44,7 +47,7 @@ def main():
     rows = build_rows(fecha)
 
     buf = io.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=["pozo_id", "fecha", "bpd_producido", "horas_operativas", "observaciones"])
+    writer = csv.DictWriter(buf, fieldnames=["pozo_id", "fecha", "bpd_producido", "horas_operativas", "observaciones", "gas_mcfd"])
     writer.writeheader()
     writer.writerows(rows)
 

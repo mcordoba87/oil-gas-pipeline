@@ -17,7 +17,7 @@ set -a
 source "$PROJECT_DIR/.env"
 set +a
 
-CONTAINER="oilgas-timescaledb"
+SERVICE="timescaledb"
 
 # Flags para docker compose: "-T" evita TTY
 COMPOSE=(docker compose -f "$PROJECT_DIR/docker-compose.yml")
@@ -27,10 +27,10 @@ if [ ! -d "$INIT_DIR" ]; then
   exit 1
 fi
 
-echo "Aplicando migraciones de $INIT_DIR a $CONTAINER ..."
+echo "Aplicando migraciones de $INIT_DIR al servicio $SERVICE ..."
 for f in "$INIT_DIR"/*.sql; do
   echo "--- $(basename "$f")"
-  "${COMPOSE[@]}" exec -T "$CONTAINER" \
+  "${COMPOSE[@]}" exec -T "$SERVICE" \
     psql -v ON_ERROR_STOP=1 \
          -U "$TSDB_POSTGRES_USER" \
          -d "$TSDB_POSTGRES_DB" \
@@ -38,6 +38,6 @@ for f in "$INIT_DIR"/*.sql; do
 done
 
 echo "=== Migraciones aplicadas. Políticas activas: ==="
-"${COMPOSE[@]}" exec -T "$CONTAINER" \
+"${COMPOSE[@]}" exec -T "$SERVICE" \
   psql -U "$TSDB_POSTGRES_USER" -d "$TSDB_POSTGRES_DB" -c \
-  "SELECT hypertable_name, job_type, schedule_interval FROM timescaledb_information.jobs ORDER BY hypertable_name;"
+  "SELECT hypertable_name, application_name, schedule_interval FROM timescaledb_information.jobs ORDER BY hypertable_name;"

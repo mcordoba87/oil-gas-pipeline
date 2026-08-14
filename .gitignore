@@ -19,3 +19,11 @@ logs/
 .idea/
 .vscode/
 .DS_Store
+
+# dbt (Fase 3)
+dbt_petrolera/target/
+dbt_petrolera/logs/
+dbt_petrolera/dbt_packages/
+dbt_petrolera/.user.yml
+dbt_packages/
+dbt.log

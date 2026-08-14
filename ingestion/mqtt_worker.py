@@ -38,7 +38,9 @@ WATERMARK_TOLERANCE_SEC = 300   # 5 min
 
 
 class ReadingBuffer:
-    """Agrupa lecturas por (pozo_id, seq) hasta completar las 3 métricas."""
+    """Agrupa lecturas por (pozo_id, seq) hasta completar las 4 métricas."""
+
+    REQUIRED_METRICS = 4  # presion, temperatura, caudal, gas
 
     def __init__(self, tolerance_sec=WATERMARK_TOLERANCE_SEC):
         self.groups = {}                      # key -> {metrica: (ts_rx, payload)}
@@ -55,7 +57,7 @@ class ReadingBuffer:
     def ready(self, now=None):
         now = now or time.time()
         return [k for k, g in self.groups.items()
-                if len(g["metrics"]) == 3]
+                if len(g["metrics"]) == self.REQUIRED_METRICS]
 
     def expired(self, now=None):
         now = now or time.time()
@@ -91,7 +93,7 @@ class MqttWorker:
         if len(parts) != 3 or parts[0] != "pozos":
             return
         pozo_id, metric = parts[1], parts[2]
-        if metric not in {"presion", "temperatura", "caudal"}:
+        if metric not in {"presion", "temperatura", "caudal", "gas"}:
             return
 
         try:
@@ -114,7 +116,7 @@ class MqttWorker:
             self.buffer.add(pozo_id, seq, metric, ts_pub, payload)
             self.raw_lines.append(json.dumps(payload))
 
-        if metric == "caudal":  # última métrica: intentar flush inmediato
+        if metric == "gas":  # última métrica: intentar flush inmediato
             self.flush()
 
     # ------------------------------------------------------------ flushing
@@ -132,6 +134,7 @@ class MqttWorker:
                     m["presion"]["valor"],
                     m["temperatura"]["valor"],
                     m["caudal"]["valor"],
+                    m["gas"]["valor"],
                 ))
             for key in expired:
                 group = self.buffer.pop(key)
@@ -151,7 +154,7 @@ class MqttWorker:
             cur = conn.cursor()
             psycopg2.extras.execute_values(
                 cur,
-                "INSERT INTO lecturas_sensores (time, pozo_id, presion_psi, temperatura_c, caudal_bpd) "
+                "INSERT INTO lecturas_sensores (time, pozo_id, presion_psi, temperatura_c, caudal_bpd, gas_mcfd) "
                 "VALUES %s ON CONFLICT DO NOTHING",
                 rows,
             )

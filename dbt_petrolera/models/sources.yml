@@ -1,0 +1,57 @@
+# ===============================================================================
+# Sources de la Fase 3
+#   - timescale: tablas/hypertables nativas de TimescaleDB (schema public)
+#   - raw: esquema cargado desde MinIO por ingestion/load_landing_to_raw.py
+# ===============================================================================
+version: 2
+
+sources:
+  - name: timescale
+    schema: public
+    tables:
+      - name: lecturas_sensores
+        description: "Hypertable con lecturas crudas de sensores IoT (MQTT)."
+        loaded_at_field: time
+        freshness:
+          warn_after: {count: 15, period: minute}
+        columns:
+          - name: time
+            data_type: timestamptz
+          - name: pozo_id
+            data_type: text
+          - name: presion_psi
+            data_type: float8
+          - name: temperatura_c
+            data_type: float8
+          - name: caudal_bpd
+            data_type: float8
+          - name: gas_mcfd
+            data_type: float8
+      - name: lecturas_hora
+        description: "Continuous aggregate horario por pozo."
+      - name: lecturas_dia
+        description: "Continuous aggregate diario por pozo."
+      - name: pozos
+        description: "Espejo de trabajo de pozos (fuente OLTP), joins en TSDB."
+      - name: cuencas
+        description: "Dimensión de cuencas."
+      - name: alertas
+        description: "Hypertable de alertas (destino de fct_alertas_anomalias)."
+
+  - name: raw
+    schema: raw
+    tables:
+      - name: produccion_diaria
+        description: "CSV de producción diaria desde MinIO landing/produccion_diaria."
+      - name: laboratorio
+        description: "CSV de análisis de laboratorio desde MinIO landing/laboratorio."
+      - name: oltp_pozos
+        description: "Snapshot de pozos OLTP desde MinIO raw/oltp/pozos.csv."
+      - name: oltp_mantenimientos
+        description: "Mantenimientos OLTP desde MinIO raw/oltp/mantenimientos.csv."
+      - name: oltp_paradas
+        description: "Paradas programadas OLTP desde MinIO raw/oltp/paradas_programadas.csv."
+      - name: precios
+        description: "Precios WTI/Brent desde MinIO raw/precios/*.json."
+      - name: scada_logs
+        description: "Logs SCADA semi-estructurados desde MinIO raw/logs_scada/*.jsonl."

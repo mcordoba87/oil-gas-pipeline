@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS lecturas_sensores (
     pozo_id       TEXT              NOT NULL,
     presion_psi   DOUBLE PRECISION  NOT NULL,
     temperatura_c DOUBLE PRECISION  NOT NULL,
-    caudal_bpd    DOUBLE PRECISION  NOT NULL
+    caudal_bpd    DOUBLE PRECISION  NOT NULL,
+    gas_mcfd      DOUBLE PRECISION  NOT NULL DEFAULT 0
 );
 
 -- Convertir a hypertable particionada por tiempo (chunks ~1 día)
