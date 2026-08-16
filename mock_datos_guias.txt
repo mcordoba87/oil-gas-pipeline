@@ -1,0 +1,99 @@
+===============================================================================
+GUÍA DE DATOS MOCK - MONITOREO IOT DE POZOS Y MANTENIMIENTO PREDICTIVO
+Actualización: 2026-08-15
+Stack: Docker Compose (8 servicios healthy) | Python .venv | dbt Core
+===============================================================================
+
+QUÉ PUEDO CARGAR COMO MOCK
+===============================================================================
+Existen 9 fuentes mock, todas funcionales y validadas end-to-end.
+Estado = lo que hay cargado hoy en las bases.
+
++----------------------------------------------------------+----------------------------------------+--------------------------+----------------------+
+| Fuente                       | Script / servicio          		| A dónde escribe                           		| Estado actual           |
++----------------------------------------------------------+----------------------------------------+--------------------------+----------------------+
+| Sensores IoT (streaming)     | generators/sensor_simulator.py 	| MQTT -> lecturas_sensores 				| 178 lecturas,         |
+|                              | + ingestion/mqtt_worker.py 		| y raw/sensores/ (MinIO)                 		| streaming DETENIDO     |
+
+| Producción diaria (batch)    | generators/daily_production_csv.py 	| landing/produccion_diaria/ 				| 36 filas (2 fechas:  |
+|                              |                          		| -> raw.produccion_diaria                 		| 11 y 13-08)           |
+
+| Laboratorio (batch)          | generators/daily_lab_csv.py 		| landing/laboratorio/                    		| 36 filas (2 fechas)    |
+|                              |                          		| -> raw.laboratorio                       		|                        |
+
+| OLTP ERP/CMMS                | generators/seed_oltp.py   		| postgres_oltp (pozos, mantenimientos,   		| 25 pozos / 83 mant. /  |
+|                              | (+ --refresh)             		| paradas_programadas)                    		| 11 paradas             |
+
+| Extract OLTP -> Lakehouse    | ingestion/extract_oltp.py 		| raw/oltp/YYYY-MM-DD/{tabla}.csv         		| Cargado               |
+|                              |                          		| -> raw.oltp_pozos/mantenimientos/paradas 		|                        |
+
+
+| Precios WTI/Brent            | api/mock_prices_api.py    		| raw/precios/YYYY-MM-DD.json             		| 2 días                |
+|                              | (puerto 8001, ya corre)  		| -> raw.precios                          		|                        |
+|                              | + generators/fetch_prices.py 		|                                       		|                        |
+
+| Logs SCADA                   | generators/scada_logs.py  		| raw/logs_scada/YYYY-MM-DD/scada.jsonl   		| 250 eventos           |
+|                              |                          		| -> raw.scada_logs                       		|                        |
+
+| Maestros TSDB                | generators/seed_tsdb.py   		| TSDB pozos / cuencas (espejo de OLTP)   		| Sincronizado          |
+
+| Loader MinIO -> TSDB         | ingestion/load_landing_to_raw.py 	| esquema raw (insumo de dbt)    			| Funcional (14 objetos)|
+
+| Capa analítica dbt           | dbt_petrolera/            		| marts.* + public.alertas + snapshot SCD 		| Corrido OK            |
++----------------------------------------------------------+----------------------------------------+--------------------------+----------------------+
+
+Capa analítica hoy:
+  marts.fct_boe                36 filas
+  marts.fct_produccion_diaria  36 filas
+  marts.dim_pozos              25 filas
+  marts.fct_curvas_declinacion 18 filas
+  marts.fct_lecturas           ~178 filas
+  public.alertas               1 fila (fct_alertas_anomalias usa alias 'alertas')
+
+===============================================================================
+CÓMO CARGAR CADA MOCK (RUNBOOK)
+===============================================================================
+Todos los comandos se corren desde la raíz del proyecto con el .venv.
+El stack ya está arriba: docker compose ps (todo healthy).
+
+1) MASTER OLTP (si está vacío)
+   .venv/bin/python generators/seed_oltp.py            # siembra inicial 25 pozos
+   .venv/bin/python generators/seed_oltp.py --refresh  # simula operación
+
+2) STREAMING (simulador + worker, proceso continuo)
+   bash scripts/start_streaming.sh                     # ambos en background
+   # o corrida acotada:
+   .venv/bin/python generators/sensor_simulator.py --pozos 25 --duracion 120
+
+3) BATCH DIARIO (producción, laboratorio, precios, SCADA, extract OLTP)
+   .venv/bin/python generators/daily_production_csv.py
+   .venv/bin/python generators/daily_lab_csv.py
+   .venv/bin/python ingestion/extract_oltp.py
+   .venv/bin/python generators/fetch_prices.py
+   .venv/bin/python generators/scada_logs.py
+   # para historial, pasar --fecha YYYY-MM-DD en los CSV
+
+4) MAESTROS TSDB + LOADER MinIO -> TSDB
+   .venv/bin/python generators/seed_tsdb.py
+   .venv/bin/python ingestion/load_landing_to_raw.py
+
+5) DBT Y VERIFICACIÓN
+   bash scripts/verify_dbt.sh    # dbt run + test + snapshot + conteos marts
+   bash scripts/verify_tsdb.sh   # esquema, agregados, políticas
+
+6) CRON (automatiza batch; AÚN NO instalado - roadmap item 19)
+   bash cron/setup_cron.sh
+
+===============================================================================
+GAPS / PENDIENTES DETECTADOS
+===============================================================================
+- Streaming caído: sensor_simulator y mqtt_worker no están corriendo; las
+  lecturas son de hace 2 días. Es lo que más alimenta los dashboards en tiempo
+  real. Reactivar con scripts/start_streaming.sh.
+- Poca profundidad temporal: el batch solo tiene 2 fechas (11 y 13 Ago). Para
+  curvas de declinación y alertas conviene generar ~30 días de historial
+  (--fecha en daily_production_csv.py y daily_lab_csv.py).
+- Cron no instalado (roadmap item 19, [ ]).
+- Nota: fct_alertas_anomalias escribe en public.alertas por su alias, no en
+  marts.* (comportamiento esperado, no es un error).
+===============================================================================
