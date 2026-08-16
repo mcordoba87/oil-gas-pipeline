@@ -298,7 +298,7 @@ NOTA SOPORTE FASE 3:
 
 FASE 4: VISUALIZACIÓN, API & SERVIDO DE DATOS
 -------------------------------------------------------------------------------
-[ ] 4.1. Dashboards en Grafana
+[x] 4.1. Dashboards en Grafana
     - Monitoreo en tiempo real por pozo (presión, temperatura, caudal).
     - Dashboard de producción acumulada y BOE por cuenca.
     - Dashboard de curvas de declinación.
@@ -307,7 +307,7 @@ FASE 4: VISUALIZACIÓN, API & SERVIDO DE DATOS
 [ ] 4.2. Dashboard exploratorio en Superset (opcional)
     - Análisis ad-hoc para perfiles de negocio.
 
-[ ] 4.3. Capa de API en FastAPI (api/pozos_api.py)
+[x] 4.3. Capa de API en FastAPI (api/pozos_api.py)
     - GET /pozos/{id}/lecturas          -> últimas N lecturas.
     - GET /pozos/{id}/alertas           -> alertas activas.
     - GET /produccion/resumen           -> producción acumulada / BOE.

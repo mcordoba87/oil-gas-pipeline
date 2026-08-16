@@ -1,0 +1,16 @@
+# No enviar al contexto de build de Docker
+.git
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+logs/
+dbt_petrolera/target/
+dbt_petrolera/logs/
+dbt_petrolera/dbt_packages/
+minio_data/
+tsdb_data/
+oltp_data/
+grafana_data/
+*.md
