@@ -1,664 +1,910 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "row"
-      }
-    ]
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "oilgas-produccion-boe",
+    "namespace": "default",
+    "uid": "59995800-2cc7-4c14-aecb-ec3779553c03",
+    "resourceVersion": "1786934294701990",
+    "generation": 2,
+    "creationTimestamp": "2026-08-15T06:29:18Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "3346716877778944"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "access-policy:service",
+      "grafana.app/managedBy": "classic-file-provisioning",
+      "grafana.app/managerId": "default",
+      "grafana.app/sourceChecksum": "f9ccdb82c912a048fa91415e5f7da8a3",
+      "grafana.app/sourcePath": "/etc/grafana/provisioning/dashboards/produccion_boe.json",
+      "grafana.app/sourceTimestamp": "1786934264000",
+      "grafana.app/updatedBy": "access-policy:service",
+      "grafana.app/updatedTimestamp": "2026-08-17T02:38:14Z",
+      "grafana.app/folder": ""
+    }
   },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
-  "liveNow": false,
-  "panels": [
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
-            "fillOpacity": 60,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "builtIn": true,
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "query": {
+            "datasource": {
+              "name": "-- Grafana --"
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n    $__timeGroup(fecha, '1d', 0),\n    cuenca,\n    sum(bpd_producido) AS bpd_producido\nFROM marts.fct_boe\nWHERE $__timeFilter(fecha)\n  AND ($cuenca = 'Todas' OR cuenca = '$cuenca')\nGROUP BY 1, cuenca\nORDER BY 1;",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "sql": {
-            "columns": [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ],
-            "group": [],
-            "limit": 1000
-          },
-          "table": "marts.fct_boe",
-          "timeseries": {
-            "timeColumn": "fecha",
-            "timeColumnType": "timestamp",
-            "timeInterval": "",
-            "valueColumn": "value"
-          },
-          "timeColumn": "fecha",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "expression"
-            }
-          ]
-        }
-      ],
-      "title": "Producción diaria por cuenca (BPD)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "time_series",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n    $__timeGroup(fecha, '1d', 0),\n    cuenca,\n    sum(boe_bbl) AS boe_bbl\nFROM marts.fct_boe\nWHERE $__timeFilter(fecha)\n  AND ($cuenca = 'Todas' OR cuenca = '$cuenca')\nGROUP BY 1, cuenca\nORDER BY 1;",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "sql": {
-            "columns": [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ],
-            "group": [],
-            "limit": 1000
-          },
-          "table": "marts.fct_boe",
-          "timeseries": {
-            "timeColumn": "fecha",
-            "timeColumnType": "timestamp",
-            "timeInterval": "",
-            "valueColumn": "value"
-          },
-          "timeColumn": "fecha",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "expression"
-            }
-          ]
-        }
-      ],
-      "title": "BOE diario por cuenca",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1000
-              },
-              {
-                "color": "red",
-                "value": 5000
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 9
-      },
-      "id": 3,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT sum(boe_bbl) AS boe_total FROM marts.fct_boe;",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "sql": {
-            "columns": [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ],
-            "group": [],
-            "limit": 1000
-          },
-          "table": "marts.fct_boe",
-          "timeseries": {
-            "timeColumn": "fecha",
-            "timeColumnType": "timestamp",
-            "timeInterval": "",
-            "valueColumn": "value"
-          },
-          "timeColumn": "fecha",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "expression"
-            }
-          ]
-        }
-      ],
-      "title": "BOE acumulado histórico",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1000
-              },
-              {
-                "color": "red",
-                "value": 5000
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 6,
-        "y": 9
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT sum(bpd_producido) AS bpd_total FROM marts.fct_boe;",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "sql": {
-            "columns": [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ],
-            "group": [],
-            "limit": 1000
-          },
-          "table": "marts.fct_boe",
-          "timeseries": {
-            "timeColumn": "fecha",
-            "timeColumnType": "timestamp",
-            "timeInterval": "",
-            "valueColumn": "value"
-          },
-          "timeColumn": "fecha",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "expression"
-            }
-          ]
-        }
-      ],
-      "title": "BPD acumulado histórico",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
+            "group": "grafana",
+            "kind": "DataQuery",
+            "spec": {},
+            "version": "v0"
           }
-        },
-        "overrides": []
+        }
+      }
+    ],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "timescaledb"
+                      },
+                      "group": "postgres",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "time_series",
+                        "group": [],
+                        "metricColumn": "none",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    $__timeGroup(fecha, '1d', 0),\n    cuenca,\n    sum(bpd_producido) AS bpd_producido\nFROM marts.fct_boe\nWHERE $__timeFilter(fecha)\n  AND ('$cuenca' = 'Todas' OR cuenca = '$cuenca')\nGROUP BY 1, cuenca\nORDER BY 1;",
+                        "select": [
+                          [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ]
+                        ],
+                        "sql": {
+                          "columns": [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ],
+                          "group": [],
+                          "limit": 1000
+                        },
+                        "table": "marts.fct_boe",
+                        "timeColumn": "fecha",
+                        "timeColumnType": "timestamp",
+                        "timeseries": {
+                          "timeColumn": "fecha",
+                          "timeColumnType": "timestamp",
+                          "timeInterval": "",
+                          "valueColumn": "value"
+                        },
+                        "where": [
+                          {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "expression"
+                          }
+                        ]
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 1,
+          "links": [],
+          "title": "Producción diaria por cuenca (BPD)",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "bars",
+                    "fillOpacity": 60,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "normal"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  "unit": "bps"
+                },
+                "overrides": []
+              },
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.1.3"
+          }
+        }
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 9
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "timescaledb"
+                      },
+                      "group": "postgres",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "time_series",
+                        "group": [],
+                        "metricColumn": "none",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    $__timeGroup(fecha, '1d', 0),\n    cuenca,\n    sum(boe_bbl) AS boe_bbl\nFROM marts.fct_boe\nWHERE $__timeFilter(fecha)\n  AND ('$cuenca' = 'Todas' OR cuenca = '$cuenca')\nGROUP BY 1, cuenca\nORDER BY 1;",
+                        "select": [
+                          [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ]
+                        ],
+                        "sql": {
+                          "columns": [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ],
+                          "group": [],
+                          "limit": 1000
+                        },
+                        "table": "marts.fct_boe",
+                        "timeColumn": "fecha",
+                        "timeColumnType": "timestamp",
+                        "timeseries": {
+                          "timeColumn": "fecha",
+                          "timeColumnType": "timestamp",
+                          "timeInterval": "",
+                          "valueColumn": "value"
+                        },
+                        "where": [
+                          {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "expression"
+                          }
+                        ]
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 2,
+          "links": [],
+          "title": "BOE diario por cuenca",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 20,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  "unit": "bps"
+                },
+                "overrides": []
+              },
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [
+                    "last"
+                  ],
+                  "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              }
+            },
+            "version": "13.1.3"
+          }
+        }
       },
-      "id": 5,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "timescaledb"
+                      },
+                      "group": "postgres",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "group": [],
+                        "metricColumn": "none",
+                        "rawQuery": true,
+                        "rawSql": "SELECT sum(boe_bbl) AS boe_total FROM marts.fct_boe;",
+                        "select": [
+                          [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ]
+                        ],
+                        "sql": {
+                          "columns": [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ],
+                          "group": [],
+                          "limit": 1000
+                        },
+                        "table": "marts.fct_boe",
+                        "timeColumn": "fecha",
+                        "timeColumnType": "timestamp",
+                        "timeseries": {
+                          "timeColumn": "fecha",
+                          "timeColumnType": "timestamp",
+                          "timeInterval": "",
+                          "valueColumn": "value"
+                        },
+                        "where": [
+                          {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "expression"
+                          }
+                        ]
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 3,
+          "links": [],
+          "title": "BOE acumulado histórico",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "yellow",
+                        "value": 1000
+                      },
+                      {
+                        "color": "red",
+                        "value": 5000
+                      }
+                    ]
+                  },
+                  "unit": "bps"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.1.3"
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "timescaledb"
+                      },
+                      "group": "postgres",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "group": [],
+                        "metricColumn": "none",
+                        "rawQuery": true,
+                        "rawSql": "SELECT sum(bpd_producido) AS bpd_total FROM marts.fct_boe;",
+                        "select": [
+                          [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ]
+                        ],
+                        "sql": {
+                          "columns": [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ],
+                          "group": [],
+                          "limit": 1000
+                        },
+                        "table": "marts.fct_boe",
+                        "timeColumn": "fecha",
+                        "timeColumnType": "timestamp",
+                        "timeseries": {
+                          "timeColumn": "fecha",
+                          "timeColumnType": "timestamp",
+                          "timeInterval": "",
+                          "valueColumn": "value"
+                        },
+                        "where": [
+                          {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "expression"
+                          }
+                        ]
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 4,
+          "links": [],
+          "title": "BPD acumulado histórico",
+          "vizConfig": {
+            "group": "stat",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "yellow",
+                        "value": 1000
+                      },
+                      {
+                        "color": "red",
+                        "value": 5000
+                      }
+                    ]
+                  },
+                  "unit": "bps"
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              }
+            },
+            "version": "13.1.3"
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "timescaledb"
+                      },
+                      "group": "postgres",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "editorMode": "code",
+                        "format": "table",
+                        "group": [],
+                        "metricColumn": "none",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    cuenca,\n    sum(bpd_producido) AS bpd_acumulado,\n    sum(boe_bbl)       AS boe_acumulado\nFROM marts.fct_boe\nGROUP BY cuenca\nORDER BY boe_acumulado DESC;",
+                        "select": [
+                          [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ]
+                        ],
+                        "sql": {
+                          "columns": [
+                            {
+                              "params": [
+                                "value"
+                              ],
+                              "type": "column"
+                            }
+                          ],
+                          "group": [],
+                          "limit": 1000
+                        },
+                        "table": "marts.fct_boe",
+                        "timeColumn": "fecha",
+                        "timeColumnType": "timestamp",
+                        "timeseries": {
+                          "timeColumn": "fecha",
+                          "timeColumnType": "timestamp",
+                          "timeInterval": "",
+                          "valueColumn": "value"
+                        },
+                        "where": [
+                          {
+                            "name": "$__timeFilter",
+                            "params": [],
+                            "type": "expression"
+                          }
+                        ]
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "",
+          "id": 5,
+          "links": [],
+          "title": "Acumulado por cuenca",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "BOE acumulado"
+                  }
+                ]
+              }
+            },
+            "version": "13.1.3"
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
           {
-            "desc": true,
-            "displayName": "BOE acumulado"
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              },
+              "height": 9,
+              "width": 12,
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              },
+              "height": 9,
+              "width": 12,
+              "x": 12,
+              "y": 0
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              },
+              "height": 7,
+              "width": 6,
+              "x": 0,
+              "y": 9
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              },
+              "height": 7,
+              "width": 6,
+              "x": 6,
+              "y": 9
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 12,
+              "y": 9
+            }
           }
         ]
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "group": [],
-          "metricColumn": "none",
-          "rawQuery": true,
-          "rawSql": "SELECT\n    cuenca,\n    sum(bpd_producido) AS bpd_acumulado,\n    sum(boe_bbl)       AS boe_acumulado\nFROM marts.fct_boe\nGROUP BY cuenca\nORDER BY boe_acumulado DESC;",
-          "refId": "A",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ]
-          ],
-          "sql": {
-            "columns": [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
-              }
-            ],
-            "group": [],
-            "limit": 1000
-          },
-          "table": "marts.fct_boe",
-          "timeseries": {
-            "timeColumn": "fecha",
-            "timeColumnType": "timestamp",
-            "timeInterval": "",
-            "valueColumn": "value"
-          },
-          "timeColumn": "fecha",
-          "timeColumnType": "timestamp",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "expression"
-            }
-          ]
-        }
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "fase4",
+      "produccion"
+    ],
+    "timeSettings": {
+      "autoRefresh": "1m",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
       ],
-      "title": "Acumulado por cuenca",
-      "type": "table"
-    }
-  ],
-  "refresh": "1m",
-  "schemaVersion": 39,
-  "tags": [
-    "fase4",
-    "produccion"
-  ],
-  "templating": {
-    "list": [
+      "fiscalYearStartMonth": 0,
+      "from": "now-30d",
+      "hideTimepicker": false,
+      "timezone": "browser",
+      "to": "now"
+    },
+    "title": "Producción Acumulada y BOE por Cuenca",
+    "variables": [
       {
-        "current": {},
-        "datasource": {
-          "type": "postgres",
-          "uid": "timescaledb"
-        },
-        "definition": "SELECT 'Todas' AS nombre UNION SELECT nombre FROM cuencas ORDER BY nombre;",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Cuenca",
-        "multi": false,
-        "name": "cuenca",
-        "options": [],
-        "query": {
-          "query": "SELECT 'Todas' AS nombre UNION SELECT nombre FROM cuencas ORDER BY nombre;",
-          "refId": "TimescaleDB-variable-query"
-        },
-        "refresh": 2,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 1,
-        "type": "query"
+        "kind": "QueryVariable",
+        "spec": {
+          "allowCustomValue": true,
+          "current": {
+            "text": "Todas",
+            "value": "Todas"
+          },
+          "definition": "  SELECT DISTINCT cuenca FROM marts.fct_boe ORDER BY cuenca",
+          "hide": "dontHide",
+          "includeAll": false,
+          "label": "Cuenca",
+          "multi": false,
+          "name": "cuenca",
+          "options": [],
+          "query": {
+            "datasource": {
+              "name": "timescaledb"
+            },
+            "group": "postgres",
+            "kind": "DataQuery",
+            "spec": {
+              "dataset": "oil_tsdb",
+              "editorMode": "code",
+              "format": "table",
+              "query": "  SELECT DISTINCT cuenca FROM marts.fct_boe ORDER BY cuenca",
+              "rawQuery": true,
+              "rawSql": "  SELECT DISTINCT cuenca FROM marts.fct_boe ORDER BY cuenca",
+              "refId": "TimescaleDB-variable-query",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            },
+            "version": "v0"
+          },
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "regexApplyTo": "value",
+          "skipUrlSync": false,
+          "sort": "alphabeticalAsc"
+        }
       }
     ]
-  },
-  "time": {
-    "from": "now-30d",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Producción Acumulada y BOE por Cuenca",
-  "uid": "oilgas-produccion-boe",
-  "version": 1,
-  "weekStart": ""
+  }
 }
