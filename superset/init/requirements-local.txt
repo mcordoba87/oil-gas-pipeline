@@ -1,0 +1,4 @@
+# Dependencias extra para Apache Superset (Fase 4, item 4.2)
+# La imagen lean oficial NO incluye el driver de Postgres (psycopg2), necesario
+# para conectar a TimescaleDB. Se instala al arrancar via entrypoint.sh.
+psycopg2-binary

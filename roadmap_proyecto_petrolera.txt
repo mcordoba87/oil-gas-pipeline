@@ -203,6 +203,16 @@ MODIFICADOS:
     ingestion/mqtt_worker.py                    # reensambla 4 métricas
     cron/crontab.example                        # jobs del loader
     .gitignore                                  # target/logs/packages dbt
+FASE 4 (4.2 Superset):
+    superset/init/superset-init.sh         # db upgrade + admin + init
+    superset/init/provision.py             # REST: registra TSDB + datasets marts
+    superset/init/entrypoint.sh            # instala psycopg2 en el venv + exec
+    superset/init/requirements-local.txt   # psycopg2-binary
+    superset/config/superset_config.py     # Redis cache + results backend (cachelib)
+    scripts/verify_superset.sh             # smoke test end-to-end de Superset
+MODIFICADOS FASE 4:
+    docker-compose.yml                    # superset, superset-init, superset-provision, redis
+    .env / .env.example                   # SUPERSET_* (port, admin, secret_key, version)
 ===============================================================================
 
 
@@ -304,8 +314,39 @@ FASE 4: VISUALIZACIÓN, API & SERVIDO DE DATOS
     - Dashboard de curvas de declinación.
     - Alertas visuales (umbrales de presión crítica).
 
-[ ] 4.2. Dashboard exploratorio en Superset (opcional)
-    - Análisis ad-hoc para perfiles de negocio.
+[x] 4.2. Dashboard exploratorio en Superset
+    - Análisis ad-hoc para perfiles de negocio. Apache Superset 5.0.0 (pinned).
+    - Conexión a TimescaleDB (todos los esquemas/modelos consultables en SQL Lab:
+      staging/intermediate/marts/raw/snapshots/agregados continuos).
+    - Provisioning automático (patrón minio-init):
+        * superset-init: db upgrade + create-admin + init.
+        * superset-provision: REST API registra la database TimescaleDB y crea
+          datasets de los 6 marts (dim_pozos, fct_lecturas, fct_produccion_diaria,
+          fct_boe, fct_curvas_declinacion, alertas). Idempotente.
+    - SQL Lab requiere results backend: se agregó Redis (servicio `redis` + cachelib
+      RedisCache en superset/config/superset_config.py).
+    - La imagen lean oficial no trae psycopg2: entrypoint.sh lo instala
+      (superset/init/requirements-local.txt) en los 3 servicios (corren como root).
+    - Acceso: http://localhost:8088 (admin / SUPERSET_ADMIN_PASSWORD).
+    - Verificación: bash scripts/verify_superset.sh (health, login, database,
+      datasets, query de prueba a marts.fct_boe vía SQL Lab API).
+
+    Consultas ad-hoc de ejemplo (SQL Lab):
+      -- BOE por cuenca y día
+      SELECT cuenca, fecha, sum(boe_bbl) FROM marts.fct_boe GROUP BY 1,2 ORDER BY 2;
+      -- Alertas abiertas por severidad
+      SELECT tipo, severidad, count(*) FROM public.alertas
+      WHERE estado='abierta' GROUP BY 1,2 ORDER BY 3 DESC;
+      -- Curvas de declinación por pozo (mejor ajuste)
+      SELECT pozo_id, round(qi_bpd::numeric,1) AS qi, round(tasa_declinacion_d::numeric,4) AS D, r2
+      FROM marts.fct_curvas_declinacion ORDER BY r2 DESC;
+      -- Producción vs precios WTI
+      SELECT d.fecha, sum(d.bpd_producido) AS bpd, avg(p.wti_usd_bbl) AS wti
+      FROM marts.fct_produccion_diaria d LEFT JOIN raw.precios p ON p.fecha = d.fecha
+      GROUP BY 1 ORDER BY 1;
+      -- Mantenimientos correctivos por pozo y estado
+      SELECT p.pozo_id, p.cuenca, p.estado_actual, p.n_correctivos
+      FROM marts.dim_pozos p ORDER BY p.n_correctivos DESC;
 
 [x] 4.3. Capa de API en FastAPI (api/pozos_api.py)
     - GET /pozos/{id}/lecturas          -> últimas N lecturas.
