@@ -187,6 +187,104 @@ services:
       retries: 5
       start_period: 20s
 
+  # ----------------------------------------- Redis (cache / results backend de Superset)
+  redis:
+    image: redis:7-alpine
+    container_name: oilgas-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - oil_net
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ------------------------ Apache Superset (Fase 4, item 4.2)
+  # La imagen lean oficial no trae psycopg2 (driver de Postgres/TimescaleDB):
+  # entrypoint.sh instala superset/init/requirements-local.txt en el venv.
+  # Los tres servicios corren como root para poder escribir en el venv.
+  #
+  # Job one-shot (patrón minio-init): migra el metastore, crea el admin y los
+  # permisos base. Debe terminar antes de arrancar el servicio `superset`.
+  superset-init:
+    image: apache/superset:${SUPERSET_VERSION}
+    container_name: oilgas-superset-init
+    user: "0:0"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL}
+    volumes:
+      - superset_data:/app/superset_home
+      - ./superset/init:/app/superset-init:ro
+      - ./superset/config/superset_config.py:/app/pythonpath/superset_config.py:ro
+    entrypoint: ["/bin/bash", "/app/superset-init/entrypoint.sh", "/bin/bash", "/app/superset-init/superset-init.sh"]
+    networks:
+      - oil_net
+    restart: "no"
+
+  # Servidor web de Superset (gunicorn). El metastore queda listo tras superset-init.
+  superset:
+    image: apache/superset:${SUPERSET_VERSION}
+    container_name: oilgas-superset
+    restart: unless-stopped
+    user: "0:0"
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_LOAD_EXAMPLES: "no"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    entrypoint: ["/bin/bash", "/app/superset-init/entrypoint.sh", "/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    ports:
+      - "${SUPERSET_PORT:-8088}:8088"
+    volumes:
+      - superset_data:/app/superset_home
+      - ./superset/init:/app/superset-init:ro
+      - ./superset/config/superset_config.py:/app/pythonpath/superset_config.py:ro
+    networks:
+      - oil_net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8088/health', timeout=3)\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Job one-shot: registra TimescaleDB como database y crea los datasets de los
+  # marts vía REST API (idempotente). Espera a que `superset` esté healthy.
+  superset-provision:
+    image: apache/superset:${SUPERSET_VERSION}
+    container_name: oilgas-superset-provision
+    user: "0:0"
+    depends_on:
+      superset:
+        condition: service_healthy
+    environment:
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      TIMESDB_SQLALCHEMY_URI: postgresql://${TSDB_POSTGRES_USER}:${TSDB_POSTGRES_PASSWORD}@timescaledb:5432/${TSDB_POSTGRES_DB}
+    entrypoint: ["/bin/bash", "/app/superset-init/entrypoint.sh", "python", "-u", "/app/superset-init/provision.py"]
+    volumes:
+      - ./superset/init:/app/superset-init:ro
+      - ./superset/config/superset_config.py:/app/pythonpath/superset_config.py:ro
+    networks:
+      - oil_net
+    restart: "no"
+
 # ===============================================================================
 networks:
   oil_net:
@@ -199,3 +297,5 @@ volumes:
   oltp_data:
   minio_data:
   grafana_data:
+  superset_data:
+  redis_data:
