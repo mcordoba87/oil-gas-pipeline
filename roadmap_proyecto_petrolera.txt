@@ -213,6 +213,17 @@ FASE 4 (4.2 Superset):
 MODIFICADOS FASE 4:
     docker-compose.yml                    # superset, superset-init, superset-provision, redis
     .env / .env.example                   # SUPERSET_* (port, admin, secret_key, version)
+FASE 4 (4.4 App móvil de campo):
+    timescaledb/init/05_app_campo.sql     # dispositivos_campo + notificaciones + push_watermark
+    api/campo_app_api.py                  # backend FastAPI + dispatcher push (inbox + MQTT)
+    api/campo_app.Dockerfile              # imagen oilgas-campo-app
+    app_movil/                            # app React Native (TypeScript) para Android
+    scripts/verify_campo_app.sh           # smoke test end-to-end del backend de la app
+    scripts/build_apk.sh                  # gradlew assembleDebug
+    scripts/install_app.sh                # adb install del APK
+MODIFICADOS FASE 4.4:
+    docker-compose.yml                    # servicio campo_app
+    .env / .env.example                   # CAMPO_APP_PORT, CAMPO_APP_PUSH_INTERVAL_SEC, CAMPO_APP_LAN_IP
 ===============================================================================
 
 
@@ -355,8 +366,20 @@ FASE 4: VISUALIZACIÓN, API & SERVIDO DE DATOS
     - Autenticación básica (API Key o JWT).
     - Documentación automática (Swagger/OpenAPI).
 
-[ ] 4.4. App móvil de campo (simulada o mock)
-    - Endpoint de notificación push simulado para alertas de presión.
+[x] 4.4. App móvil de campo (simulada o mock)
+    - Backend FastAPI propio (api/campo_app_api.py, contenedor campo_app):
+      registro de dispositivos, inbox de notificaciones y lecturas en vivo.
+    - Endpoint de notificación push simulado para alertas de presión:
+      dispatcher en background detecta alertas de presión (presion_zscore,
+      fuera_rango_fisico) -> inserta en tabla notificaciones (inbox, canal
+      'poll') y publica por MQTT en notificaciones/{device_id} (canal 'mqtt',
+      WebSocket :9001). Endpoint /push/inyectar para push manual de demo.
+    - App móvil real React Native (TypeScript) en app_movil/ para Android:
+      Login -> Dashboard de pozos -> Detalle de pozo -> Notificaciones.
+      Conexión por IP LAN del PC (ajustable en pantalla de ajustes).
+    - Build/instalación: scripts/build_apk.sh y scripts/install_app.sh (adb).
+    - Verificación: bash scripts/verify_campo_app.sh (health, registro,
+      inyección de push, chequeo MQTT + inbox).
 
 [ ] 4.5. Automatización y CI/CD (.github/workflows/ci.yml)
     - Workflow en cada PR: lint + dbt parse, sin conexión a BD.
