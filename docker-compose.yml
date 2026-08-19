@@ -162,6 +162,37 @@ services:
       retries: 5
       start_period: 10s
 
+  # --------------------- Backend App móvil de campo (Fase 4, item 4.4)
+  # Sirve REST (dispositivos/notificaciones/pozos) y corre el dispatcher de
+  # push: alertas de presión de TimescaleDB -> inbox + MQTT (WebSocket :9001).
+  campo_app:
+    build:
+      context: .
+      dockerfile: api/campo_app.Dockerfile
+    image: oilgas-campo-app:latest
+    container_name: oilgas-campo_app
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    environment:
+      TIMESDB_DB_URL: postgresql://${TSDB_POSTGRES_USER}:${TSDB_POSTGRES_PASSWORD}@timescaledb:5432/${TSDB_POSTGRES_DB}
+      MQTT_BROKER_URL: mqtt://mosquitto:1883
+      API_KEY: ${API_KEY}
+      CAMPO_APP_PUSH_INTERVAL_SEC: ${CAMPO_APP_PUSH_INTERVAL_SEC:-10}
+    ports:
+      - "${CAMPO_APP_PORT:-8010}:8010"
+    networks:
+      - oil_net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8010/health', timeout=2)\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   # ------------------------------------------------------------------- Grafana
   grafana:
     image: grafana/grafana:latest
